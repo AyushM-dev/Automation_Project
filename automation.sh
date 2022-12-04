@@ -58,9 +58,35 @@ archive_logs() {
         aws s3 cp /tmp/$name-httpd-logs-$timestamp.tar s3://$s3/$name-httpd-logs-$timestamp.tar
 }
 
+#Bookkeeping
+book_keeping() {
+        inventory_file="/var/www/html/inventory.html"
+        if [ -f "$inventory_file" ]; then
+                echo "$inventory_file exists!"
+        else
+                echo "Creating $inventory_file"
+                echo "Log Type              Date Created                    Type        Size" >> $inventory_file
+        fi
+        size=`du -sh /tmp/$name-httpd-logs-$timestamp.tar | awk  '{print $1}'`
+        echo "httpd-logs            $timestamp                 tar         $size" >> $inventory_file
+}
+
+#CronJob
+cron_job() {
+        cron_file="/etc/cron.d/automation"
+        if [ -f "$cron_file" ]; then
+            echo "$cron_file exists."
+        else
+                echo "Creating $cron_file"
+                echo "0 11 * * * root sh /root/Automation_Project/automation.sh" >> $cron_file
+        fi
+}
+
 #Task2 Steps:
 update_package
 install_apache2
 check_apache2
 enable_apache2
 archive_logs
+book_keeping
+cron_job
